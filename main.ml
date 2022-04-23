@@ -259,10 +259,23 @@ let rec eval (e: exp) (env: value env) (secure: permissionList) : value =
     	(* | _ -> failwith("errore non è una funzione che conosco");;*)
           	 
 
-eval(    	(*Questa eval fallisce: il chiamante ha il permesso di read,
+
+(*Debug phase*)
+
+(*La seguente eval fallisce: il chiamante ha il permesso di read,
          	il chiamato ha il permesso di write e read e cerca di eseguire
          	una send che richiede i permessi di send*)
-  Let("f", Fun("x", Let("g", Fun( "y", Send("1234"), [Pwrite;Pread]),	Call(Den "g",	Eint(2))), [Pread]), Call(Den "f", Eint(10)))) [] [];;
+      
+(*eval(Let("f", Fun("x", Let("g", Fun( "y", Send("1234"), [Pwrite; Pread]),	Call(Den "g",	Eint(2))), [Pread]), Call(Den "f", Eint(10)))) [] [];;*)
 
 
+(*La seguente eval fallisce poichè il chiamante ha il permesso di read,
+    il chiamato ha il permesso di read e write e 
+    prova ad eseguire una open che richiede al chiamante sia i permessi di read che di write*)
+(*eval(Let("f", Fun("x", Let("g", Fun("y", Open("file"), [Pread; Pwrite]), Call(Den "g", Eint(2))), [Pread]), Call(Den "f", Eint(10))))[][];;*)
+
+
+(*La seguente eval ha successo poichè il chiamante ha il permesso di read e write,
+    il chiamato ha il permesso di read e write e prova ad eseguire una open che richiede al chiamante sia i permessi di read che di write*)
+eval(Let("f", Fun("x", Let("g", Fun("y", Open("file"), [Pread; Pwrite]), Call(Den "g", Eint(2))), [Pread; Pwrite]), Call(Den "f", Eint(10))))[][];;
 
