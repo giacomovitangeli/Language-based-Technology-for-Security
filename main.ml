@@ -15,7 +15,7 @@ type permissiont =
   | Pwrite
   | Psend;;
 
-(* server per memorizzare i permessi delle varie funzioni *)
+(* serve per memorizzare i permessi delle varie funzioni *)
 type permissionList = (permissiont list) list;;
 
 (* The language has been extended with booleans, Functions and functions calls and read, write,
@@ -38,11 +38,11 @@ type exp = Eint of int
 
 (* The expression can be evaluated by the interpreter to an integer, a boolean, or a closure
 which is the runtime value of functions expressions. *)
-type  value = Int of int
+type value = Int of int
         	| Bool of bool
         	| String of string
-        	| Closure of  valueFun
-and valueFun = ide * exp * value env * permissiont list;;
+        	| Closure of valueFun 
+          and valueFun = ide * exp * value env * permissiont list;;
 (* a closure is made of the function name, the function argument, the body of the function
    and the symbol table with the values captured. We assume for simplicity to have only one
    parameter per function, which is similar to function abstractions in the lambda calculus
@@ -277,5 +277,21 @@ let rec eval (e: exp) (env: value env) (secure: permissionList) : value =
 
 (*La seguente eval ha successo poichè il chiamante ha il permesso di read e write,
     il chiamato ha il permesso di read e write e prova ad eseguire una open che richiede al chiamante sia i permessi di read che di write*)
-eval(Let("f", Fun("x", Let("g", Fun("y", Open("file"), [Pread; Pwrite]), Call(Den "g", Eint(2))), [Pread; Pwrite]), Call(Den "f", Eint(10))))[][];;
+(*eval(Let("f", Fun("x", Let("g", Fun("y", Open("file"), [Pread; Pwrite]), Call(Den "g", Eint(2))), [Pread; Pwrite]), Call(Den "f", Eint(10))))[][];;*)
 
+
+(*eval(Let("f", Fun("x", Let("g", Fun("y", Open("file"), [Pread; Pwrite]), Call(Den "g", Eint(2))), [Pread; Pwrite]), Call(Den "f", Eint(10))))[][];;*)
+
+
+(*
+eval(Let("f", Fun("x", Open("file"), [Pread; Pwrite]), Call(Den "f", Eint(10))))[][];;
+Let("f", Fun("x", Write("file"), [Pwrite]), Call(Den "f", Eint(10)));;
+*)
+
+
+Let("f", Fun("x", Binop(Sum, Den "x", Eint 1), []), Call(Den "f", Eint(3)));;
+
+
+(*let f x = x + 1;;
+f 3;;
+*)
