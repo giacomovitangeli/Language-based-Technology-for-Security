@@ -1,3 +1,5 @@
+
+
 exception DynamicTypeError of string (* eccezione per errore di tipo a run time *)
                                 	 
 type 't env = (string * 't ) list
@@ -47,6 +49,13 @@ type value = Int of int
    and the symbol table with the values captured. We assume for simplicity to have only one
    parameter per function, which is similar to function abstractions in the lambda calculus
 where we obtain multi parameter functions by chaining single parameter ones.*)
+
+
+(*print string type*)
+let printVal v =
+  match v with
+  | string -> print_endline(v);;
+
 
 let rec lookup env x =
   match env with
@@ -283,13 +292,17 @@ let rec eval (e: exp) (env: value env) (secure: permissionList) : value =
 (*eval(Let("f", Fun("x", Let("g", Fun("y", Open("file"), [Pread; Pwrite]), Call(Den "g", Eint(2))), [Pread; Pwrite]), Call(Den "f", Eint(10))))[][];;*)
 
 
+
+eval(Let("f", Fun("x", Read("file"), [Pread]), Call(Den "f", Eint(10))))[][];;
+
+printVal("Hello World!");;
+
 (*
-eval(Let("f", Fun("x", Open("file"), [Pread; Pwrite]), Call(Den "f", Eint(10))))[][];;
 Let("f", Fun("x", Write("file"), [Pwrite]), Call(Den "f", Eint(10)));;
 *)
 
 
-Let("f", Fun("x", Binop(Sum, Den "x", Eint 1), []), Call(Den "f", Eint(3)));;
+(*eval(Let("f", Fun("x", Binop(Sum, Den "x", Eint 1), []), Call(Den "f", Eint(3))))[][];;*)
 
 
 (*let f x = x + 1;;
