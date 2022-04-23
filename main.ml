@@ -262,29 +262,7 @@ let rec eval (e: exp) (env: value env) (secure: permissionList) : value =
 eval(    	(*Questa eval fallisce: il chiamante ha il permesso di read,
          	il chiamato ha il permesso di write e read e cerca di eseguire
          	una send che richiede i permessi di send*)
-  Let(
-	"f",
-	Fun(
-  	"x",
-  	Let(
-    	"g",
-    	Fun(
-      	"y",
-      	Send("1234"),
-      	[Pwrite;Pread]
-    	),
-    	Call(
-      	Den "g",
-      	Eint(2)
-    	)
-  	),
-  	[Pread]
-	),
-	Call(
-  	Den "f", Eint(10)
-	)
-  )
-) [] [];;
+  Let("f", Fun("x", Let("g", Fun( "y", Send("1234"), [Pwrite;Pread]),	Call(Den "g",	Eint(2))), [Pread]), Call(Den "f", Eint(10)))) [] [];;
 
 
 
