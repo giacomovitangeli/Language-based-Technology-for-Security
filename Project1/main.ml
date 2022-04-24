@@ -57,6 +57,8 @@ let printVal v =
   | string -> print_endline(v);;
 
 
+
+  
 let rec lookup env x =
   match env with
   | [] -> failwith (x ^ " not found")
