@@ -1,5 +1,3 @@
-
-
 exception DynamicTypeError of string (* eccezione per errore di tipo a run time *)
                                 	 
 type 't env = (string * 't ) list
@@ -338,6 +336,8 @@ let rec execute (e:expt) (env: value env) (secure: permissionList): value =
 
 (*Debug phase*)
 
+
+
 (*La seguente eval fallisce: il chiamante ha il permesso di read,
          	il chiamato ha il permesso di write e read e cerca di eseguire
          	una send che richiede i permessi di send*)
@@ -389,7 +389,6 @@ execute(Let("f", Fun("x", Binop(Sum, Den "x", Eint 1), []), Call(Den "f", Eint(5
 
 let env0 = emptyenv;; 
 
-(*let mysum = (fun x -> (fun y -> x + y));;*)
 let res = eval(Let( "mysum", Fun("mysum", 
                                     Fun("x", 
                                           Fun("y", 
@@ -405,56 +404,30 @@ let res = eval(Let( "mysum", Fun("mysum",
               ) env0 [];;
 
 print_endline("Hello World 1!");;
-(*execute(
-  Let("result", Let("parz_res", Ebool true ,Call(Den "mysum", Eint(5))), Call(Den "mysum", Eint(5)))
-) env0 [];;*)
 
-
-
-(* let mysum = (fun x -> (fun y -> x + y));;  execute(let result = mysum(5, 5));*)
-(*execute(Let("f", Let("mysum",
-                    Fun("mysum", 
-                        Let( "x",
-                            Fun("x", 
-                                Let("y",
-                                    Fun("y", 
-                                        Binop(Sum, Den "x", Den "y"), 
-                                        []
-                                        ),
-                                        Call(Den "y", Eint(0))
-                                    ),
-                                []
-                                ),
-                            Call(Den "x", Eint(0))
-                          ),[]
-                      ),
-                    Call(Den "x", Eint(5))
-                    ), Call(Den "mysum", Eint(5))
-            )
-      ) env0 [];;*)
-
-      
-(*execute(Let("mysum",
-            Let("x", 
-                  Fun( "x", 
-                      Let("y",
-                          Fun("y", 
-                              Binop(Sum, Den "x", Den "y"), 
-                              []
-                            ),
-                          Call(Den "y", Eint(5))
-                        ),   
-                      []
-                    ),
-                  Call(Den "x", Eint(0))                       
-                ),                
-            Call(Den "mysum", Eint(0))
-          )
-) env0 [];;*)
 
 (*let mysum = (fun x -> (fun y -> x + y));;*)
+(*execute(let result = mysum(5, 5));*)
+execute(Let("mysum", Fun("mysum", Let("x", Fun( "x", Let("y", Fun("y", Binop(Sum, Den "x", Den "y"), []), Call(Den "y", Eint(5))), []), Call(Den "x", Eint (5))), []), Call(Den "mysum", Eint(0)))) env0 [];;
 
-execute(Let("mysum", Fun("mysum", Let("x", Fun( "x", Let("y", Fun("y", Binop(Sum, Den "x", Den "y"), []), Call(Den "y", Eint(5))), []), Call(Den "x", Eint (0))), []), Call(Den "mysum", Eint(0)))) env0 [];;
+(*let mypin = 12345;;*)
+(*execute(let result = myping in send(result))*)
+
+
+
+
+execute(Let("myping", Fun("send", Send"12345", [Psend]), Call(Den "myping", Eint(0)))) [][];;
+
+
+
+(*La seguente eval fallisce: il chiamante ha il permesso di read,
+         	il chiamato ha il permesso di write e read e cerca di eseguire
+         	una send che richiede i permessi di send*)
+      
+(*eval(Let("f", Fun("x", Let("g", Fun( "y", Send("1234"), [Pwrite; Pread]),	Call(Den "g",	Eint(2))), [Pread]), Call(Den "f", Eint(10)))) [] [];;*)
+
+
+
 
 (*execute(Let("f", Let("g",
                           Fun("g", 
