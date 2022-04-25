@@ -390,15 +390,79 @@ execute(Let("f", Fun("x", Binop(Sum, Den "x", Eint 1), []), Call(Den "f", Eint(5
 let env0 = emptyenv;; 
 
 (*let mysum = (fun x -> (fun y -> x + y));;*)
-let res = eval(Fun("mysum", 
-                        Fun("x", 
+let res = eval(Let( "mysum", Fun("mysum", 
+                                    Fun("x", 
+                                          Fun("y", 
+                                              Binop(Sum, Den "x", Den "y"), 
+                                              []
+                                            ),
+                                          []
+                                      ),
+                                    []
+                                ),
+                                Call(Den "mysum", Eint(0))
+                  )
+              ) env0 [];;
+
+print_endline("Hello World 1!");;
+(*execute(
+  Let("result", Let("parz_res", Ebool true ,Call(Den "mysum", Eint(5))), Call(Den "mysum", Eint(5)))
+) env0 [];;*)
+
+
+
+(* let mysum = (fun x -> (fun y -> x + y));;  execute(let result = mysum(5, 5));*)
+(*execute(Let("f", Let("mysum",
+                    Fun("mysum", 
+                        Let( "x",
+                            Fun("x", 
+                                Let("y",
+                                    Fun("y", 
+                                        Binop(Sum, Den "x", Den "y"), 
+                                        []
+                                        ),
+                                        Call(Den "y", Eint(0))
+                                    ),
+                                []
+                                ),
+                            Call(Den "x", Eint(0))
+                          ),[]
+                      ),
+                    Call(Den "x", Eint(5))
+                    ), Call(Den "mysum", Eint(5))
+            )
+      ) env0 [];;*)
+
+      
+(*execute(Let("mysum",
+            Let("x", 
+                  Fun( "x", 
+                      Let("y",
                           Fun("y", 
-                            Binop(Sum, Den "x", Den "y"), []) , []
-                            ), [])) env0 [];;
+                              Binop(Sum, Den "x", Den "y"), 
+                              []
+                            ),
+                          Call(Den "y", Eint(5))
+                        ),   
+                      []
+                    ),
+                  Call(Den "x", Eint(0))                       
+                ),                
+            Call(Den "mysum", Eint(0))
+          )
+) env0 [];;*)
 
+(*let mysum = (fun x -> (fun y -> x + y));;*)
 
-print_endline("prova");;
+execute(Let("mysum", Fun("mysum", Let("x", Fun( "x", Let("y", Fun("y", Binop(Sum, Den "x", Den "y"), []), Call(Den "y", Eint(5))), []), Call(Den "x", Eint (0))), []), Call(Den "mysum", Eint(0)))) env0 [];;
 
-(*execute(let result = mysum(5, 5));*)
+(*execute(Let("f", Let("g",
+                          Fun("g", 
+                                    Call(Den "mysum", Eint(5)), []
+                              ),
+                          Call(Den "g", Eint(0))
+                    ), Call(Den "g", Eint(5))
+            )
+        ) env0 [];;*)
 
-execute(Let("f", Fun("x", Binop(Sum, Den "x", Eint 1), []), Call(Den "f", Eint(5))))[][];;
+print_endline("Hello World 2!");;
