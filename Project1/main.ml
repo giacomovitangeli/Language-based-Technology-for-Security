@@ -38,83 +38,76 @@ type exp = Eint of int
      	| Open of string
      	| Send of string;;
 
+
+       type expt = Eint of int
+       | Ebool of bool
+       | Estring of string
+       | Den of ide
+       | Binop of binop*exp*exp
+       | If of exp*exp*exp
+       | Let of ide*exp*exp
+       | Fun of ide * exp * permissiont list
+       | Call of exp*exp;;
+
+type typet =
+ | IntType
+ | StringType
+ | BoolType
+ | FunType of typet * typet;;
+
 (* The expression can be evaluated by the interpreter to an integer, a boolean, or a closure
 which is the runtime value of functions expressions. *)
-type value = Int of int
-        	| Bool of bool
-        	| String of string
-        	| Closure of valueFun 
-          and valueFun = ide * exp * value env * permissiont list;;
+type  value = Int of int
+          | Bool of bool
+          | String of string
+          | Closure of  valueFun
+          | Closuret of ide * exp * value env * typet
+and valueFun = ide * exp * value env * permissiont list;;
 (* a closure is made of the function name, the function argument, the body of the function
-   and the symbol table with the values captured. We assume for simplicity to have only one
-   parameter per function, which is similar to function abstractions in the lambda calculus
+ and the symbol table with the values captured. We assume for simplicity to have only one
+ parameter per function, which is similar to function abstractions in the lambda calculus
 where we obtain multi parameter functions by chaining single parameter ones.*)
 
-
-(*print string type*)
-let printVal v =
-  match v with
-  | string -> print_endline(v);;
-
-
-
-  
 let rec lookup env x =
-  match env with
-  | [] -> failwith (x ^ " not found")
-  | (ide, value)::r -> if x = ide then value else lookup r x;;
+match env with
+| [] -> failwith (x ^ " not found")
+| (ide, value)::r -> if x = ide then value else lookup r x;;
 
 let bind (env:value env) (x: ide) (v: value) = (x,v)::env;;
- 
-(*type typet =
-   | IntType
-   | StringType
-   | BoolType
-   | FunType of typet * typet
-   | PermissionType of permissiont
-   | SetPermissionsType of permissiont
- and permissiont = ide * ide;; *)
 
-(*let typecheck (s : string) (v : value) : bool =
-   match s with
- 	"int" ->
-   	(match v with
-      	Int(_) -> true
-    	| _ -> false)|
- 	"bool" ->
-   	(match v with
-      	Bool(_) -> true
-    	| _ -> false)|
- 	"string" ->
-   	(match v with
-      	String(_) -> true
-    	| _ -> false)|
- 	"permission" ->
-   	(match v with (* controllo se il valore passato è di tipo Permission*)
-      	Permission _ -> true
-    	| _        	-> false )|
- 	"fun" ->
-   	(match v with   (* controllo se il valore passato è di tipo funval *)
-      	Closure _ -> true
-    	| _ -> false )|
- 	"setPermissions" ->
-   	(match v with   (* controllo se il valore passato è di tipo SetPermissions *)
-      	SetPermissions _ -> true
-    	| _ -> false )|
- 	_ -> failwith("Not a valid type");;*)
+
+
+let typecheck (s : string) (v : value) : bool =
+ match s with
+   | "int" ->
+     (match v with
+        | Int(_) -> true
+        | _ -> false)
+   | "bool" ->
+     (match v with
+        | Bool(_) -> true
+        | _ -> false)
+   | "string" ->
+     (match v with
+        | String(_) -> true
+        | _ -> false)
+   | "fun" ->
+     (match v with   (* controllo se il valore passato è di tipo funval *)
+        | Closure _ -> true
+        | _ -> false )
+   | _ -> true;;
 
 (* gli passo uno dei tipi consentiti dal linguaggio e ritorna una funzione evt -> bool,
-   sto facendo uso del currying questa è una funzione ausiliaria che consente di effettuare
-   una chiamata parametrizzata al typechecker dinamico sulla base del tipo passato come
-   parametro *)
-(*let check_typet (ty : typet) : value -> bool =
-   match ty with
-   | IntType                   	-> typecheck "int"
-   | StringType                	-> typecheck "string"
-   | BoolType                  	-> typecheck "bool"
-   | FunType(_,_)              	-> typecheck "fun"
-   | PermissionType(_)         	-> typecheck "permission"
-   | SetPermissionsType(_)     	-> typecheck "setPermissions";;*)
+ sto facendo uso del currying questa è una funzione ausiliaria che consente di effettuare
+ una chiamata parametrizzata al typechecker dinamico sulla base del tipo passato come
+ parametro *)
+let check_typet (ty : typet) : value -> bool =
+ match ty with
+ | IntType                       -> typecheck "int"
+ | StringType                    -> typecheck "string"
+ | BoolType                      -> typecheck "bool"
+ | FunType(_,_)                  -> typecheck "fun";;
+                                                
 
 (*let rec set_contains (s: set_val) (v: value) : bool =
    match s with
@@ -153,6 +146,9 @@ let bind (env:value env) (x: ide) (v: value) = (x,v)::env;;
    | ConsV (v',s') -> ConsV(v', set_remove s' v);; (* l'elemento v' non è quello che voglio rimuovere dunque lo mantengo *)
 *)
                                               	(*support functions*)
+
+
+
 
 (* sono state introdotte queste 3 funzioni perchè il sec_manager è la struttura usata a run time
   per gestire la stack inspection e pensato come una lista di liste di permessi.
@@ -271,6 +267,75 @@ let rec eval (e: exp) (env: value env) (secure: permissionList) : value =
           	 
 
 
+
+
+let rec execute (e:expt) (env: value env) (secure: permissionList): value =
+  match e with
+  | Eint n -> Int n
+  | Ebool n -> Bool n
+  | Estring s -> String s
+  | Fun (x, body, permissions) -> Closure (x, body, env, permissions)  
+  | Den i -> lookup env i (* effettuo un lookup nell'ambiente env per l'identificatore i *)
+  |If(e1,e2,e3) ->
+      (let g = (eval e1 env secure) in
+       match typecheck "bool" g , g with
+       | true, Bool(true) -> eval e2 env secure
+       | false, Bool(false) -> eval e3 env secure
+       | _, _ -> raise (DynamicTypeError "La guardia dell' ifthenelse deve essere di tipo booleano")
+      )
+      (*eval e2 (bind env id (eval e1 env secure)) secure*)
+  |Let(id, e1, e2) -> let xval = eval e1 env secure in
+      let env1 = bind env id xval in
+      eval e2 env1 secure                   
+  |Binop (op,e1,e2) -> (
+      let e1 = eval e1 env secure in
+      let e2 = eval e2 env secure in
+      match op,e1,e2 with
+      | Sum,Int n1, Int n2 -> Int (n1+n2)
+      | Times,Int n1, Int n2 -> Int (n1 * n2)
+      | Minus,Int n1, Int n2 -> Int (n1-n2)
+      | Equal, Int n1, Int n2 -> Bool (n1 = n2)
+      | Less, Int n1, Int n2 -> Bool (n1 < n2)
+      | Greater, Int n1, Int n2 -> Bool (n1 > n2)
+      | _ -> failwith "Invalid binary expression" )
+  | Call(e1, e2) ->
+    (* il sec_manager che viene usato nella eval della espressione e1 (potrebbe essere una
+      espressione della sintassi astratta) sarebbe [] passato alla eval come secondo parametro
+      di volta in volta usato come stack per contenere tutti i permessi di tutte le funzioni *)
+      (let f = eval e1 env secure in
+       match f with
+       | Closuret(arg,body,tEnv, tt) ->
+            (* i privileges sono i permessi attuali della funzione *)
+(*
+  metterlo nella dichiarazione ha il problema che se una funzione viene dichiarata ma non viene
+  chiamata i suoi privilegi vengono messi lo stesso sul security manager e quindi influiscono
+  con i permessi delle altre funzioni che poi vengono invece chiamate.
+  Dato che una funzione quando fa la call il suo record di attivazione viene messo sullo stack
+  solo al momento della call, molto probabilmente deve avvenire nella call l'aggiunta del security
+  manager però si ha il problema di sotto dell'esempio con le funzioni innestate in cui viene
+  valutata prima quella più interna e poi quella più esterna. Abbiamo deciso di fare delle
+  primitive già pronte che usano la stack inspection è più controllabile perchè lasciare i
+  permessi direttamente via codice non è facile.
+*)
+
+            (* secure è quello che nelle funzioni ausiliarie è stato chiamato permStack *)
+           let actualVal = eval e2 env secure  in
+           if check_typet tt actualVal = true
+            then (
+              let actualVal = bind tEnv arg actualVal in
+              eval body actualVal secure 
+            )
+           else raise (DynamicTypeError "Call: ha fallito. Il tipo del parametro attuale è errato")
+       | _ -> failwith("errore non e' una closure") );;
+      
+
+
+
+
+
+
+
+
 (*Debug phase*)
 
 (*La seguente eval fallisce: il chiamante ha il permesso di read,
@@ -295,9 +360,10 @@ let rec eval (e: exp) (env: value env) (secure: permissionList) : value =
 
 
 
-eval(Let("f", Fun("x", Read("file"), [Pread]), Call(Den "f", Eint(10))))[][];;
+(*eval(Let("f", Fun("x", Read("file"), [Pread]), Call(Den "f", Eint(10))))[][];;
 
 printVal("Hello World!");;
+*)
 
 (*
 Let("f", Fun("x", Write("file"), [Pwrite]), Call(Den "f", Eint(10)));;
@@ -310,3 +376,29 @@ Let("f", Fun("x", Write("file"), [Pwrite]), Call(Den "f", Eint(10)));;
 (*let f x = x + 1;;
 f 3;;
 *)
+
+
+eval(
+    Let("f",Fun("x",Binop(Sum, Den "x", Eint 1),[])
+                ,Call( Den "f", Eint 10)
+        )
+) [] [];;
+
+(*execute((fun x = x+1) 5);; *)
+execute(Let("f", Fun("x", Binop(Sum, Den "x", Eint 1), []), Call(Den "f", Eint(5))))[][];;
+
+let env0 = emptyenv;; 
+
+(*let mysum = (fun x -> (fun y -> x + y));;*)
+let res = eval(Fun("mysum", 
+                        Fun("x", 
+                          Fun("y", 
+                            Binop(Sum, Den "x", Den "y"), []) , []
+                            ), [])) env0 [];;
+
+
+print_endline("prova");;
+
+(*execute(let result = mysum(5, 5));*)
+
+execute(Let("f", Fun("x", Binop(Sum, Den "x", Eint 1), []), Call(Den "f", Eint(5))))[][];;
